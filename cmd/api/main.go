@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"trash/api/internal/server"
+	"trash/api/internal/user"
 	"trash/api/pkg/config"
 	"trash/api/pkg/database"
 
@@ -24,7 +26,18 @@ func main() {
 	//load db
 	db := database.InitPostgres(*cfg)
 
-	server := http.Server{
+	//repos
+	userRepo := user.NewPostgresUserRepository(db)
+	//services
+	userService := user.NewUserService(userRepo)
+	//handlers
+	userHandler := user.NewUserHandler(userService)
+
+	//register routes
+	server.RegisterRoutes(r, userHandler)
+
+	//
+	srv := http.Server{
 		Addr:    cfg.Server.Host + ":" + cfg.Server.Port,
 		Handler: r,
 	}
@@ -32,8 +45,8 @@ func main() {
 	serverError := make(chan error, 1)
 	//run server in gorout
 	go func() {
-		slog.Info("start server", "address", server.Addr)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		slog.Info("start server", "address", srv.Addr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			serverError <- err
 			return
 		}
@@ -53,7 +66,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	if err := server.Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(ctx); err != nil {
 		slog.Error("shutdown error", "error", err)
 		return
 	}
