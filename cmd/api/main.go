@@ -8,16 +8,24 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"trash/api/pkg/config"
+	"trash/api/pkg/database"
 
 	"github.com/go-chi/chi/v5"
+	_ "github.com/lib/pq"
 )
 
 // start server
 func main() {
 	r := chi.NewRouter()
 
+	//get config
+	cfg := config.Load()
+	//load db
+	db := database.InitPostgres(*cfg)
+
 	server := http.Server{
-		Addr:    "127.0.0.1:5001",
+		Addr:    cfg.Server.Host + ":" + cfg.Server.Port,
 		Handler: r,
 	}
 
@@ -51,6 +59,7 @@ func main() {
 	}
 
 	//end task here
-
+	db.Close()
+	//
 	slog.Info("successfully stopped server")
 }
