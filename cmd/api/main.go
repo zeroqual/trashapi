@@ -37,7 +37,7 @@ func main() {
 	userHandler := user.NewUserHandler(userService, *jwtManager)
 
 	//register routes
-	server.RegisterRoutes(r, userHandler)
+	server.RegisterRoutes(r, userHandler, jwtManager)
 
 	//
 	srv := http.Server{

@@ -6,7 +6,10 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+
 	"trash/api/pkg/helpers"
+
+	"github.com/google/uuid"
 )
 
 type UserHandler struct {
@@ -78,7 +81,6 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//get user
-
 	usr, err := h.userService.GetUser(r.Context(), dto.Email, dto.Password)
 	if err != nil {
 		slog.Error("failed to get user", "error", err.OriginalError)
@@ -106,5 +108,16 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	helpers.WriteResponse(w, map[string]string{
 		"access_token":  tokenPair.AccessToken.Raw,
 		"refresh_token": tokenPair.RefreshToken.Raw,
+	}, http.StatusOK)
+}
+
+func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(helpers.UserKey).(uuid.UUID)
+	if !ok {
+		helpers.WriteError(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	helpers.WriteResponse(w, map[string]string{
+		"user_id": userID.String(),
 	}, http.StatusOK)
 }

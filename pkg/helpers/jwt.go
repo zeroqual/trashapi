@@ -29,12 +29,12 @@ type TokenPair struct {
 
 type CustomClaims struct {
 	TokenType string
-	Role      string `json:",omitempty"`
+	Role      string
 	jwt.RegisteredClaims
 }
 
 func (m *JwtManager) Parse(tokenString string) (*CustomClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, CustomClaims{}, func(t *jwt.Token) (any, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(t *jwt.Token) (any, error) {
 		if t.Method != SigningMethod {
 			return nil, errors.New("failed to parse token")
 		}
@@ -48,11 +48,11 @@ func (m *JwtManager) Parse(tokenString string) (*CustomClaims, error) {
 		return nil, err
 	}
 
-	claims, ok := token.Claims.(CustomClaims)
+	claims, ok := token.Claims.(*CustomClaims)
 	if !ok {
 		return nil, err
 	}
-	return &claims, nil
+	return claims, nil
 }
 
 func (m *JwtManager) CreateTokenPair(userID uuid.UUID, role string) (*TokenPair, error) {
