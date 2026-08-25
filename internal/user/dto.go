@@ -20,3 +20,15 @@ func (s RequestRegisterUser) Validate() error {
 		validation.Field(&s.Surname, validation.Required, validation.Length(1, 10)),
 	)
 }
+
+type RequestLoginUser struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (s RequestLoginUser) Validate() error {
+	return validation.ValidateStruct(&s,
+		validation.Field(&s.Email, validation.Required, is.Email),
+		validation.Field(&s.Password, validation.Required, validation.Length(5, 20)),
+	)
+}

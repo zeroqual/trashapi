@@ -10,9 +10,11 @@ import (
 func RegisterRoutes(r *chi.Mux, h *user.UserHandler) {
 	r.Get("/health", healthHandler)
 
+	//public routes
 	r.Group(func(r chi.Router) {
 		r.Get("/health", healthHandler)
 		r.Post("/sign-up", h.Register)
+		r.Post("/sign-in", h.Login)
 	})
 
 }

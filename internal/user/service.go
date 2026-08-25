@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"trash/api/pkg/helpers"
 
@@ -9,9 +10,11 @@ import (
 )
 
 var (
-	ErrUserAlreadyExists = errors.New("user already exists")
-	ErrHashPassword      = errors.New("failed to hash password")
-	ErrInternalServer    = errors.New("internal server error")
+	ErrUserAlreadyExists    = errors.New("user already exists")
+	ErrHashPassword         = errors.New("failed to hash password")
+	ErrInternalServer       = errors.New("internal server error")
+	ErrUserNotFound         = errors.New("user not found")
+	ErrInvalidCredentionals = errors.New("invalid credentionals")
 )
 
 type ResponseError struct {
@@ -46,6 +49,34 @@ func (s *UserService) CreateUser(ctx context.Context, email, password, name, sur
 			}
 		}
 		return nil, &ResponseError{OriginalError: err, ReturnError: ErrInternalServer}
+	}
+
+	return usr, nil
+}
+
+func (s *UserService) GetUser(ctx context.Context, email, password string) (*User, *ResponseError) {
+	//get user
+	usr, err := s.repo.ByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &ResponseError{
+				OriginalError: err,
+				ReturnError:   ErrUserNotFound,
+			}
+		}
+		return nil, &ResponseError{
+			OriginalError: err,
+			ReturnError:   ErrInternalServer,
+		}
+	}
+
+	//compare psswd
+	err = helpers.ComparePasswords(password, usr.PasswordHash)
+	if err != nil {
+		return nil, &ResponseError{
+			OriginalError: err,
+			ReturnError:   ErrInvalidCredentionals,
+		}
 	}
 
 	return usr, nil

@@ -12,6 +12,7 @@ import (
 	"trash/api/internal/user"
 	"trash/api/pkg/config"
 	"trash/api/pkg/database"
+	"trash/api/pkg/helpers"
 
 	"github.com/go-chi/chi/v5"
 	_ "github.com/lib/pq"
@@ -26,12 +27,14 @@ func main() {
 	//load db
 	db := database.InitPostgres(*cfg)
 
+	//managers
+	jwtManager := helpers.NewJwtManager(cfg.Server.Secret)
 	//repos
 	userRepo := user.NewPostgresUserRepository(db)
 	//services
 	userService := user.NewUserService(userRepo)
 	//handlers
-	userHandler := user.NewUserHandler(userService)
+	userHandler := user.NewUserHandler(userService, *jwtManager)
 
 	//register routes
 	server.RegisterRoutes(r, userHandler)

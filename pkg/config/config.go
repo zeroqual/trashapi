@@ -14,8 +14,9 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Host string
-	Port string
+	Host   string
+	Port   string
+	Secret string
 }
 
 type DatabaseConfig struct {
@@ -50,8 +51,9 @@ func loadDatabaseConfig() DatabaseConfig {
 
 func loadServerConfig() ServerConfig {
 	return ServerConfig{
-		Host: getEnv("SERVER_HOST", ""),
-		Port: getEnv("SERVER_PORT", ""),
+		Host:   getEnv("SERVER_HOST", ""),
+		Port:   getEnv("SERVER_PORT", ""),
+		Secret: getEnv("JWT_SECRET", ""),
 	}
 }
 
