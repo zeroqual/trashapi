@@ -6,6 +6,7 @@ import (
 	"errors"
 	"trash/api/pkg/helpers"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
@@ -80,4 +81,9 @@ func (s *UserService) GetUser(ctx context.Context, email, password string) (*Use
 	}
 
 	return usr, nil
+}
+
+// заглушка(?)
+func (s *UserService) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
+	return s.repo.ByID(ctx, id)
 }

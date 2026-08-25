@@ -16,6 +16,7 @@ func RegisterRoutes(r *chi.Mux, h *user.UserHandler, j *helpers.JwtManager) {
 		r.Get("/health", healthHandler)
 		r.Post("/sign-up", h.Register)
 		r.Post("/sign-in", h.Login)
+		r.Post("/refresh", h.Refresh)
 	})
 
 	//protected routes

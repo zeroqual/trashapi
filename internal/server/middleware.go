@@ -35,20 +35,19 @@ func AuthMiddleware(manager helpers.JwtManager) func(http.Handler) http.Handler 
 			if parsedToken.TokenType != "access" {
 				slog.Error("token type not access", "type", parsedToken.TokenType)
 				helpers.WriteError(w, "unauthorized", http.StatusUnauthorized)
-				return
-			}
-
-			//time
-			if time.Now().After(parsedToken.ExpiresAt.Time) {
-				slog.Error("token already expires")
-				helpers.WriteError(w, "unauthorized", http.StatusUnauthorized)
-				return
 			}
 			if parsedToken.Subject == "" {
 				slog.Error("parsedtoken subject zero", "subject", parsedToken.Subject)
 				helpers.WriteError(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
+			//time
+			if time.Now().After(parsedToken.ExpiresAt.Time) {
+				slog.Error("token already expires")
+				helpers.WriteError(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+
 			userID, err := uuid.Parse(parsedToken.Subject)
 			if err != nil {
 				slog.Error("failed to parse userid", "error", err)

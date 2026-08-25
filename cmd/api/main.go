@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"trash/api/internal/refresh"
 	"trash/api/internal/server"
 	"trash/api/internal/user"
 	"trash/api/pkg/config"
@@ -31,10 +32,12 @@ func main() {
 	jwtManager := helpers.NewJwtManager(cfg.Server.Secret)
 	//repos
 	userRepo := user.NewPostgresUserRepository(db)
+	refreshRepo := refresh.NewPostgresRefreshRepository(db)
 	//services
 	userService := user.NewUserService(userRepo)
+	refreshService := refresh.NewRefreshService(refreshRepo)
 	//handlers
-	userHandler := user.NewUserHandler(userService, *jwtManager)
+	userHandler := user.NewUserHandler(userService, *jwtManager, refreshService)
 
 	//register routes
 	server.RegisterRoutes(r, userHandler, jwtManager)
