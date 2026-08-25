@@ -1,5 +1,12 @@
 package helpers
 
-type contextKey string
+import "github.com/google/uuid"
 
-const UserKey contextKey = ""
+type contextKey struct{}
+
+var UserKey contextKey
+
+type UserContext struct {
+	UserID   uuid.UUID
+	UserRole string
+}

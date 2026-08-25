@@ -16,6 +16,7 @@ func AuthMiddleware(manager helpers.JwtManager) func(http.Handler) http.Handler 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 			if token == "" {
+				slog.Error("token not found")
 				helpers.WriteError(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
@@ -55,9 +56,41 @@ func AuthMiddleware(manager helpers.JwtManager) func(http.Handler) http.Handler 
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), helpers.UserKey, userID)
+			user := helpers.UserContext{
+				UserID:   userID,
+				UserRole: parsedToken.Role,
+			}
+			// fmt.Println(parsedToken.Role)
+			ctx := context.WithValue(r.Context(), helpers.UserKey, user)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+func GetUser(r *http.Request) (*helpers.UserContext, bool) {
+	user, ok := r.Context().Value(helpers.UserKey).(helpers.UserContext)
+
+	return &user, ok
+}
+
+func RequirePermission(permission helpers.Permission) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			userKeys, ok := GetUser(r)
+			if !ok {
+				slog.Error("failed to parse user from context")
+				helpers.WriteError(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			if !helpers.HasPremission(helpers.Role(userKeys.UserRole), permission) {
+				slog.Error("bad role", "role", userKeys.UserRole)
+				helpers.WriteError(w, "forbidden", http.StatusForbidden)
+				return
+			}
+
+			next.ServeHTTP(w, r)
 		})
 	}
 }

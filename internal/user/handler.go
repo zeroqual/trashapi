@@ -11,6 +11,7 @@ import (
 	"trash/api/internal/refresh"
 	"trash/api/pkg/helpers"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -222,12 +223,65 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(helpers.UserKey).(uuid.UUID)
+	userKeys, ok := r.Context().Value(helpers.UserKey).(helpers.UserContext)
 	if !ok {
 		helpers.WriteError(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 	helpers.WriteResponse(w, map[string]string{
-		"user_id": userID.String(),
+		"user_id": userKeys.UserID.String(),
+		"role":    userKeys.UserRole,
 	}, http.StatusOK)
+}
+
+func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
+	var dto UpdateUserRequest
+	userKeys, ok := r.Context().Value(helpers.UserKey).(helpers.UserContext)
+	if !ok {
+		helpers.WriteError(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	//get id from requests
+	user_id := chi.URLParam(r, "id")
+	if user_id == "" {
+		slog.Error("userid cannot be empty")
+		helpers.WriteError(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	user_idUUID, err := uuid.Parse(user_id)
+	if err != nil {
+		slog.Error("user not found")
+		helpers.WriteError(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	//decode requests
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&dto); err != nil {
+		slog.Error("failed to decode req", "error", err)
+		helpers.WriteError(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	//validate
+	if err := dto.Validate(); err != nil {
+		slog.Error("failed to validate req", "error", err)
+		helpers.WriteError(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	err = h.userService.UpdateUser(r.Context(), UserUpdate{
+		Name:    dto.Name,
+		Surname: dto.Surname,
+	}, userKeys, user_idUUID)
+	if err != nil {
+		slog.Error("failed to update user", "error", err)
+		helpers.WriteError(w, "forbidden", http.StatusForbidden)
+		return
+	}
+
+	helpers.WriteResponse(w, map[string]string{
+		"success": "true",
+	}, http.StatusCreated)
 }

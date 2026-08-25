@@ -87,3 +87,18 @@ func (s *UserService) GetUser(ctx context.Context, email, password string) (*Use
 func (s *UserService) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	return s.repo.ByID(ctx, id)
 }
+
+func (s *UserService) UpdateUser(ctx context.Context, input UserUpdate, userKeys helpers.UserContext, pageUserID uuid.UUID) error {
+	//get user from db
+	usr, err := s.repo.ByID(ctx, pageUserID)
+	if err != nil {
+		return err
+	}
+
+	//check permession to edit
+	if usr.ID != userKeys.UserID && userKeys.UserRole != "admin" {
+		return errors.New("forbidden")
+	}
+
+	return s.repo.Update(ctx, input, usr.ID)
+}

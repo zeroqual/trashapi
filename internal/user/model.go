@@ -15,3 +15,9 @@ type User struct {
 	CreatedAt    time.Time
 	Role         string
 }
+
+// тестовое это будем менять
+type UserUpdate struct {
+	Name    string
+	Surname string
+}

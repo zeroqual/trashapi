@@ -32,3 +32,15 @@ func (s RequestLoginUser) Validate() error {
 		validation.Field(&s.Password, validation.Required, validation.Length(5, 20)),
 	)
 }
+
+type UpdateUserRequest struct {
+	Name    string `json:"name"`
+	Surname string `json:"surname"`
+}
+
+func (u UpdateUserRequest) Validate() error {
+	return validation.ValidateStruct(&u,
+		validation.Field(&u.Name, validation.Required, validation.Length(2, 20)),
+		validation.Field(&u.Surname, validation.Required, validation.Length(2, 20)),
+	)
+}

@@ -23,6 +23,8 @@ func RegisterRoutes(r *chi.Mux, h *user.UserHandler, j *helpers.JwtManager) {
 	r.Group(func(r chi.Router) {
 		r.Use(AuthMiddleware(*j))
 		r.Get("/me", h.Me)
+
+		r.With(RequirePermission(helpers.UserUpdate)).Post("/{id}", h.Update)
 	})
 }
 
